@@ -13,7 +13,7 @@ import java.util.Date;
  * 录音核心类
  */
 
-public class AudioManager {
+public class MyAudioManager{
     private MediaRecorder mRecorder;
     //文件夹位置
     private String mDirString;
@@ -38,23 +38,23 @@ public class AudioManager {
         this.mAudioStageListener=mAudioStageListener;
     }
 
-    private AudioManager(String dir) {
+    private MyAudioManager(String dir) {
         mDirString = dir;
     }
 
     /**
      * 单例化这个类
      */
-    private static AudioManager mInstance;
+    private static MyAudioManager mInstance;
 
     /**
      * 单例模式
      * */
-    public static AudioManager getmInstance(String dir){
+    public static MyAudioManager getmInstance(String dir){
         if (mInstance==null){
-            synchronized (AudioManager.class){
+            synchronized (MyAudioManager.class){
                 if (mInstance==null){
-                    mInstance=new AudioManager(dir);
+                    mInstance=new MyAudioManager(dir);
                 }
             }
         }
