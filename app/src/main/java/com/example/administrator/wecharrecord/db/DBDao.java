@@ -30,15 +30,13 @@ public class DBDao {
      * */
     public void add(Record record){
         record.setId(UUID.randomUUID().toString());
-        //开始事务
-        db.beginTransaction();
+        db = mHelper.getWritableDatabase();
+        db.beginTransaction();  //开始事务
         try {
             db.execSQL("INSERT INTO Record VALUES(?, ?, ?, ?)", new Object[]{record.getId(), record.getPath(), record.getSecond(), record.isPlayed() ? 0 : 1});
-            //设置事务成功完成
-            db.setTransactionSuccessful();
+            db.setTransactionSuccessful();  //设置事务成功完成
         } finally {
-            //结束事务
-            db.endTransaction();
+            db.endTransaction();    //结束事务
             db.close();
         }
         Log.e("wgy", "添加数据库成功："+record.toString());
@@ -71,6 +69,7 @@ public class DBDao {
      * 查找所有数据
      * */
     public List<Record> queryAll(){
+        db = mHelper.getWritableDatabase();
         List<Record> recordList=new ArrayList<>();
         Cursor cursor=db.rawQuery("SELECT * FROM record", null);
         while (cursor.moveToNext()) {

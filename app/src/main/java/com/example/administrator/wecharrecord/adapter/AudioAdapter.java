@@ -60,11 +60,11 @@ public class AudioAdapter extends BaseAdapter{
         if (convertView==null){
             view= LayoutInflater.from(mContext).inflate(R.layout.item_example_activity,parent,false);
             viewHolder=new ViewHolder();
-            viewHolder.ieaHeadImg = (ImageView) convertView.findViewById(R.id.iea_headImg);
-            viewHolder.ieaIvVoiceLine = (ImageView) convertView.findViewById(R.id.iea_iv_voiceLine);
-            viewHolder.ieaLlSinger = (LinearLayout) convertView.findViewById(R.id.iea_ll_singer);
-            viewHolder.ieaTvVoicetime1 = (TextView) convertView.findViewById(R.id.iea_tv_voicetime1);
-            viewHolder.ieaIvRed = (ImageView) convertView.findViewById(R.id.iea_iv_red);
+            viewHolder.ieaHeadImg = (ImageView) view.findViewById(R.id.iea_headImg);
+            viewHolder.ieaIvVoiceLine = (ImageView) view.findViewById(R.id.iea_iv_voiceLine);
+            viewHolder.ieaLlSinger = (LinearLayout) view.findViewById(R.id.iea_ll_singer);
+            viewHolder.ieaTvVoicetime1 = (TextView) view.findViewById(R.id.iea_tv_voicetime1);
+            viewHolder.ieaIvRed = (ImageView) view.findViewById(R.id.iea_iv_red);
             view.setTag(viewHolder);
         }else {
             view=convertView;
@@ -134,7 +134,7 @@ public class AudioAdapter extends BaseAdapter{
                         });
             }
         });
-        return null;
+        return view;
     }
 
     private void resetData() {

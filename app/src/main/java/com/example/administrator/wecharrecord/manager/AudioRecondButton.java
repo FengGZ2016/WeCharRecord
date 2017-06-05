@@ -96,7 +96,7 @@ public class AudioRecondButton extends Button implements MyAudioManager.AudioSta
         //获取录音保存位置
         String dir = FileUtils.getAppRecordDir(mContext).toString();
         //实例化录音核心类
-        mAudioManager = MyAudioManager.getmInstance(dir);
+        mAudioManager =  MyAudioManager.getInstance(dir);
         //给AudioManager设置监听
         mAudioManager.setOnAudioStageListener(this);
     }

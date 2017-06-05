@@ -5,8 +5,7 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.UUID;
 
 /**
  * Created by Administrator on 2017/6/4.
@@ -23,119 +22,117 @@ public class MyAudioManager{
     private boolean isPrepared;
 
     /**
-     * 监听接口，监听是否准备好录音
-     * */
-    public interface AudioStageListener{
-        void wellPrepared();
-    }
-
-    public AudioStageListener mAudioStageListener;
-
-    /**
-     * 设置监听器
-     * */
-    public void setOnAudioStageListener(AudioStageListener mAudioStageListener){
-        this.mAudioStageListener=mAudioStageListener;
-    }
+     * 单例化这个类
+     */
+    private static MyAudioManager mInstance;
 
     private MyAudioManager(String dir) {
         mDirString = dir;
     }
 
-    /**
-     * 单例化这个类
-     */
-    private static MyAudioManager mInstance;
+    public static MyAudioManager getInstance(String dir) {
+        if (mInstance == null) {
+            synchronized (MyAudioManager.class) {
+                if (mInstance == null) {
+                    mInstance = new MyAudioManager(dir);
 
-    /**
-     * 单例模式
-     * */
-    public static MyAudioManager getmInstance(String dir){
-        if (mInstance==null){
-            synchronized (MyAudioManager.class){
-                if (mInstance==null){
-                    mInstance=new MyAudioManager(dir);
                 }
             }
         }
         return mInstance;
-    }
-
-   /**
-    * 录音准备方法
-    * */
-    public void prepareAudio(){
-        //默认为未准备好
-        isPrepared=false;
-        //创建所属文件夹
-        File dir=new File(mDirString);
-        if (!dir.exists()){
-            dir.mkdirs();
-        }
-        //文件名字
-        String fileName=generalFileName();
-        //创建文件
-        File file=new File(dir,fileName);
-        //获取文件的路径
-        mCurrentFilePathString=file.getAbsolutePath();
-        //初始化MediaRecorder
-        initMediaRecorder();
-        //完成准备，开始录制
-        if(mAudioStageListener!=null){
-            mAudioStageListener.wellPrepared();
-        }
-
 
     }
-
 
     /**
-     * 初始化MediaRecorder
-     * */
-    private void initMediaRecorder() {
-        //实例化MediaRecorder
-        mRecorder=new MediaRecorder();
-        //设置输出文件
-        mRecorder.setOutputFile(mCurrentFilePathString);
-        //设置MediaRecorder的音频源是麦克风
-        mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        //设置MediaRecorder的输出格式为amr
-        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
-        //设置MediaRecorder的编码格式为amr，这里采用AAC主要为了适配IOS，保证在IOS上可以正常播放
-        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+     * 回调函数，准备完毕，准备好后，button才会开始显示录音
+     */
+    public interface AudioStageListener {
+        void wellPrepared();
+    }
+
+    public AudioStageListener mListener;
+
+    public void setOnAudioStageListener(AudioStageListener listener) {
+        mListener = listener;
+    }
+
+    // 准备方法
+    public void prepareAudio() {
         try {
+            // 一开始应该是false的
+            isPrepared = false;
+            //创建所属文件夹
+            File dir = new File(mDirString);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            String fileNameString = generalFileName();
+            File file = new File(dir, fileNameString);
+            //获取文件
+            mCurrentFilePathString = file.getAbsolutePath();
+
+            mRecorder = new MediaRecorder();
+            // 设置输出文件
+            mRecorder.setOutputFile(file.getAbsolutePath());
+            // 设置meidaRecorder的音频源是麦克风
+            mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            // 设置文件音频的输出格式为amr
+            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
+            // 设置音频的编码格式为amr。这里采用AAC主要为了适配IOS，保证在IOS上可以正常播放。
+            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+
+            // 严格遵守google官方api给出的mediaRecorder的状态流程图
             mRecorder.prepare();
+
             mRecorder.start();
+            // 准备结束
+            isPrepared = true;
+            // 已经准备好了，可以录制了
+            if (mListener != null) {
+                mListener.wellPrepared();
+            }
+
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //准备工作完成
-        isPrepared=true;
 
     }
 
     /**
-     * 获取声音的Level
-     * */
-    public int getVoiceLevel(int maxLevel){
+     * 随机生成文件的名称
+     *
+     * @return
+     */
+    private String generalFileName() {
+        return UUID.randomUUID().toString() + ".amr";
+    }
+
+    // 获得声音的level
+    public int getVoiceLevel(int maxLevel) {
         // mRecorder.getMaxAmplitude()这个是音频的振幅范围，值域是1-32767
-        if (isPrepared){
-            // 取证+1，否则去不到7
-            return maxLevel*mRecorder.getMaxAmplitude()/32768+1;
+        if (isPrepared) {
+            try {
+                // 取证+1，否则去不到7
+                return maxLevel * mRecorder.getMaxAmplitude() / 32768 + 1;
+            } catch (Exception e) {
+
+            }
         }
+
         return 1;
     }
 
-
-    /**
-     * 释放资源
-     * */
-    public void release(){
-        if (mRecorder==null){
-            return;
-        }
+    // 释放资源
+    public void release() {
+        // 严格按照api流程进行
+        if (mRecorder == null) return;
+        /*
+        * 这里处理一些特定情况下的异常。2017/04/12 by wgyscsf
+         */
         try {
-            //下面三个参数必须加，不加的话会奔溃，再mediarecorder.stop();
+            //下面三个参数必须加，不加的话会奔溃，在mediarecorder.stop();
             //报错为：RuntimeException:stop failed
             mRecorder.setOnErrorListener(null);
             mRecorder.setOnInfoListener(null);
@@ -150,38 +147,23 @@ public class MyAudioManager{
         }
         mRecorder.release();
         mRecorder = null;
+
     }
 
-
-    /**
-     * cancel时删除这个文件
-     * */
-    public void cancel(){
+    // 取消,因为prepare时产生了一个文件，所以cancel方法应该要删除这个文件，
+    // 这是与release的方法的区别
+    public void cancel() {
         release();
-        if (mCurrentFilePathString!=null){
-            File file=new File(mCurrentFilePathString);
+        if (mCurrentFilePathString != null) {
+            File file = new File(mCurrentFilePathString);
             file.delete();
-            mCurrentFilePathString=null;
+            mCurrentFilePathString = null;
         }
+
     }
 
-    /**
-     * 返回录音文件的路径
-     * */
-    public String getCurrentFilePath(){
+    public String getCurrentFilePath() {
         return mCurrentFilePathString;
     }
-
-
-    /**
-     * 系统当前时间作为文件名
-     * */
-    private String generalFileName() {
-        SimpleDateFormat mat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date curDate=new Date(System.currentTimeMillis());
-        String dateStr=mat.format(curDate);
-        return dateStr+".amr";
-    }
-
 
 }
