@@ -2,6 +2,7 @@ package com.example.administrator.wecharrecord;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.ListView;
 
 import com.example.administrator.wecharrecord.adapter.AudioAdapter;
@@ -25,6 +26,21 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initView();
         initData();
+        initAdapter();
+    }
+
+    private void initAdapter() {
+        mAudioAdapter=new AudioAdapter(this,mRecordList);
+        mListView.setAdapter(mAudioAdapter);
+        List<Record> records=mDBDao.queryAll();
+        if (records==null||records.isEmpty()){
+            return;
+        }
+        for (Record record:records){
+            Log.e("wgy", "initAdapter: "+record.toString() );
+        }
+        mRecordList.addAll(records);
+        mAudioAdapter.notifyDataSetChanged();
     }
 
     private void initData() {
